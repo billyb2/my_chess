@@ -1,0 +1,13 @@
+[tasks.build_wasm]
+args = ["build", "--target", "wasm32-unknown-unknown"]
+command = "cargo"
+
+[tasks.link_wasm]
+args = ["target/wasm32-unknown-unknown/debug/my_chess.wasm", "target/"]
+command = "cp"
+
+[tasks.serve]
+install_crate = "basic-http-server"
+args = ["."]
+command = "basic-http-server"
+dependencies = ["build_wasm", "copy_wasm"]

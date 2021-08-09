@@ -1,0 +1,16 @@
+[package]
+name = "my_chess"
+version = "0.1.0"
+edition = "2018"
+
+[profile.dev]
+# Since neither me or Luke uses a debugger, turning off debug info should speed up compile times (although it does make debugging shaders a bit more difficult)
+debug = 0
+opt-level = 0
+overflow-checks = false
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[dependencies]
+macroquad = "0.3"
