@@ -5,7 +5,6 @@ edition = "2018"
 
 [profile.dev]
 # Since neither me or Luke uses a debugger, turning off debug info should speed up compile times (although it does make debugging shaders a bit more difficult)
-debug = 0
 opt-level = 0
 
 [profile.release]
