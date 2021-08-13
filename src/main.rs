@@ -1,26 +1,7 @@
-use std::ops::Range;
+mod logic;
+
 use macroquad::prelude::*;
-
-#[derive(Copy, Clone, Debug, PartialEq)]
-enum PieceType {
-    Pawn,
-    Rook,
-    Knight,
-    Bishop,
-    Queen,
-    King,
-    // Dead pieces exist so the pieces variable can be an array
-    Dead,
-}
-
-#[derive(Copy, Clone, Debug)]
-struct Piece {
-    piece_type: PieceType,
-    position: (u8, u8),
-    black: bool,
-
-
-}
+use logic::*;
 
 #[inline]
 fn mouse_in_rectangle(coords: (f32, f32), size: (f32, f32)) -> bool {
@@ -65,7 +46,7 @@ async fn main() {
 
     loop {
         clear_background(DARKGRAY);
-        draw_text(&debug_text_to_draw, screen_width() / 2.0, 200.0, 10.0, BLACK);
+        draw_text(&debug_text_to_draw, screen_width() / 2.0, 200.0, 17.0, BLACK);
 
         let mouse_down = is_mouse_button_pressed(MouseButton::Left);
 
@@ -89,132 +70,7 @@ async fn main() {
                 // Don't let pieces move on top of other pieces, however
 
                 if selected_piece.is_some() {
-                    let (can_move, can_kill) = {
-                        let piece = pieces.iter().find(|piece| piece.position == selected_piece.unwrap() && piece.piece_type != PieceType::Dead).unwrap();
-                        let piece_under_mouse = pieces.iter().find(|piece| piece.position == hovered_piece_pos && hovered_piece.1.unwrap() != PieceType::Dead);
-
-                        // First, check if the move is a move that this piece can usually make
-                        let (legal_move, can_kill) = match piece.piece_type {
-                            PieceType::Pawn => {
-                                let mut can_kill = false;
-
-                                // Basically, pawns can only move forward, or diagnally if you're killing an enemy piece
-                                // Make sure the pawn is only moving 1 space vertically, no matter what kind of move they're making
-                                let legal_move = match piece.black {
-                                    // White pawns can only move up
-                                    true => hovered_piece_pos.1 > piece.position.1 && hovered_piece_pos.1 - piece.position.1 == 1,
-                                    // Black pawns can only move down
-                                    false => hovered_piece_pos.1 < piece.position.1 && piece.position.1 - hovered_piece_pos.1 == 1,
-                                }
-                                &&
-
-                                (
-                                    // Check that the pawn is moving straight forward
-                                    piece.position.0 == hovered_piece_pos.0
-
-                                    // If the player isn't moving straight forward, then do some checks
-                                    || 
-                                    (
-                                        { 
-                                            can_kill = true;
-
-                                            // First, check that there is an enemy piece where the player is trying to move
-                                            piece_under_mouse.is_some() && 
-                                            // Make sure that if the player is trying to move diagnally, they're only trying to move by 1 left or right
-                                            (piece_under_mouse.unwrap().position.1 + 1 == piece.position.1 || piece_under_mouse.unwrap().position.1 - 1 == piece.position.1)
-                                            
-                                        }
-                                    )
-                                );
-
-                                (legal_move, can_kill)
-
-                            },
-                            PieceType::Rook => {
-                                let no_piece_between_vert = |range_to_block_rook: Range<u8>| {
-                                    pieces.iter().find(|other_piece|  {
-                                        // Obviously, for a piece to block the rook, it needs to be on the same X axis (when moving vertically)
-                                        other_piece.position.0 == piece.position.0 && 
-                                        // Then, there can be no pieces in between where the player is trying to move and where it's moving
-                                        range_to_block_rook.contains(&other_piece.position.1) && 
-                                        // If the other piece is at the very exact position the rook was trying to move, it will kill it
-                                        other_piece.position.1 != hovered_piece_pos.1 &&
-                                        // Obviously, the piece can't be dead
-                                        other_piece.piece_type != PieceType::Dead
-                                    }).is_none()
-                                };
-
-                                let mut no_piece_between_horiz = |range_to_block_rook: Range<u8>| {
-                                    pieces.iter().find(|other_piece|  {
-                                        debug_text_to_draw = format!("{:?}", other_piece);
-                                        // Obviously, for a piece to block the rook, it needs to be on the same Y axis (when moving vertically)
-                                        other_piece.position.1 == piece.position.1 && 
-                                        // Then, there can be no pieces in between where the player is trying to move and where it's moving
-                                        range_to_block_rook.contains(&other_piece.position.0) && 
-                                        // If the other piece is at the very exact position the rook was trying to move, it will kill it
-                                        other_piece.position.0 != hovered_piece_pos.0 &&
-                                        // Obviously, the piece can't be dead
-                                        other_piece.piece_type != PieceType::Dead
-                                    }).is_none()
-                                };
-
-
-                                ((piece.position.0 == hovered_piece_pos.0 &&
-                                    // Check to see if the rook is moving up or down
-                                     match hovered_piece_pos.1 < piece.position.1 {
-                                         // Moving up
-                                        true => {
-                                            let range_to_block_rook = hovered_piece_pos.1..piece.position.1;
-                                            // There can't be any pieces between the place where the rook is, and where it's attempting to move
-                                            no_piece_between_vert(range_to_block_rook)
-
-                                        },
-                                        // Moving down
-                                        false => {
-                                            let range_to_block_rook = piece.position.1 + 1..hovered_piece_pos.1;
-                                            no_piece_between_vert(range_to_block_rook)
-                                            
-                                        },
-
-                                }) 
-                                // Rooks can move vertically or horizontally, but not both, hence the XOR
-                                ^
-                                 (piece.position.1 == hovered_piece_pos.1 && match hovered_piece_pos.0 < piece.position.0 {
-                                    // Left
-                                    true => {
-                                        let range_to_block_rook = hovered_piece_pos.0..piece.position.0;
-                                        // There can't be any pieces between the place where the rook is, and where it's attempting to move
-                                        no_piece_between_horiz(range_to_block_rook)
-
-                                    },
-                                    // Right
-                                    false => {
-                                        let range_to_block_rook = piece.position.0 + 1..hovered_piece_pos.0;
-                                        no_piece_between_horiz(range_to_block_rook)
-                                        
-                                    },
-
-                                 }), true)
-                            }
-                            _ => (false, false),
-
-                        };
-
-
-                        match legal_move {
-                            // Obviously, if it isn't a legal move, then don't let the player move at all
-                            true => match piece_under_mouse {
-                                // If it is a legal move, only move onto a piece if it's an enemy piece (piece.black ^ piece_under_mouse.black)
-                                // Also only move onto that piece if it's able to kill it
-                                Some(piece_under_mouse) => (piece.black ^ piece_under_mouse.black && can_kill, can_kill),
-                                None => (true, false)
-                            }
-                            false => (false, false)
-
-                        }
-
-
-                    };
+                    let (can_move, can_kill) = check_movement(&pieces, &hovered_piece, hovered_piece_pos, &mut selected_piece, &mut debug_text_to_draw);
 
                     if can_move {
                         if can_kill {
