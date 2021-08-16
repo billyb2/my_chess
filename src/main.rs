@@ -15,15 +15,15 @@ fn mouse_in_rectangle(coords: (f32, f32), size: (f32, f32)) -> bool {
 }
 
 // Some code I generated that contains the starting positions of all the pieces
-const STARTING_PIECES: [Piece; 32] = [Piece { piece_type: PieceType::Pawn, position: (0, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (1, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (2, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (3, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (4, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (5, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (6, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (7, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (0, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (1, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (2, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (3, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (4, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (5, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (6, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (7, 6), black: false }, Piece { piece_type: PieceType::Rook, position: (0, 7), black: false }, Piece { piece_type: PieceType::Knight, position: (1, 7), black: false }, Piece { piece_type: PieceType::Bishop, position: (2, 7), black: false }, Piece { piece_type: PieceType::Queen, position: (4, 7), black: false }, Piece { piece_type: PieceType::King, position: (3, 7), black: false }, Piece { piece_type: PieceType::Bishop, position: (5, 7), black: false }, Piece { piece_type: PieceType::Knight, position: (6, 7), black: false }, Piece { piece_type: PieceType::Rook, position: (7, 7), black: false }, Piece { piece_type: PieceType::Rook, position: (0, 0), black: true }, Piece { piece_type: PieceType::Knight, position: (1, 0), black: true }, Piece { piece_type: PieceType::Bishop, position: (2, 0), black: true }, Piece { piece_type: PieceType::King, position: (3, 0), black: true }, Piece { piece_type: PieceType::Queen, position: (4, 0), black: true }, Piece { piece_type: PieceType::Bishop, position: (5, 0), black: true }, Piece { piece_type: PieceType::Knight, position: (6, 0), black: true }, Piece { piece_type: PieceType::Rook, position: (7, 0), black: true }];
+const STARTING_PIECES: [Piece; 32] = [Piece { piece_type: PieceType::Pawn, position: (0, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (1, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (2, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (3, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (4, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (5, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (6, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (7, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (0, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (1, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (2, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (3, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (4, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (5, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (6, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (7, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (1, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (2, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Queen, position: (4, 7), color: PieceColor::White }, Piece { piece_type: PieceType::King, position: (3, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (5, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (6, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (7, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (1, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (2, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::King, position: (3, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Queen, position: (4, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (5, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (6, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Rook, position: (7, 0), color: PieceColor::Black }];
 
-#[macroquad::main("EmailChess")]
+#[macroquad::main(window_conf)]
 async fn main() {
     let mut pieces = STARTING_PIECES;
     let piece_size = screen_height() / 10.0;
     let mut selected_piece: Option<(u8, u8)> = None;
 
-    #[cfg(debug_assertions)]
+    
     let mut debug_text_to_draw = String::new();
 
     loop {
@@ -36,26 +36,22 @@ async fn main() {
         let hovered_piece = draw_board(piece_size, &pieces, selected_piece);
 
         if let Some(hovered_piece_pos) = hovered_piece.0 {
-            #[cfg(debug_assertions)]
-            {
-                draw_text(&format!("{},{}", hovered_piece_pos.0, hovered_piece_pos.1), screen_width() / 2.0, 300.0, 50.0, BLACK);
-                if let Some(p) = selected_piece {
-                    draw_text(&format!("{},{}", p.0, p.1), screen_width() / 2.0, 250.0, 50.0, BLACK);
+            draw_text(&format!("{},{}", hovered_piece_pos.0, hovered_piece_pos.1), screen_width() / 2.0, 300.0, 50.0, BLACK);
+            if let Some(p) = selected_piece {
+                draw_text(&format!("{},{}", p.0, p.1), screen_width() / 2.0, 250.0, 50.0, BLACK);
 
-                }
-
-            };
-            
+            }
+        
             // Moves and selects pieces
             if mouse_down {
                 // Since a piece is already selected, we need to move the current piece
                 // Don't let pieces move on top of other pieces, however
 
                 if selected_piece.is_some() {
-                    let (can_move, can_kill) = check_movement(&pieces, &hovered_piece, hovered_piece_pos, &mut selected_piece, &mut debug_text_to_draw);
+                    let piece_move = check_movement(&pieces, &hovered_piece, hovered_piece_pos, &mut selected_piece, &mut debug_text_to_draw);
 
-                    if can_move {
-                        if can_kill {
+                    if piece_move.can_move {
+                        if piece_move.can_kill {
                             if let Some(piece_under_mouse) = pieces.iter_mut().find(|piece| piece.position == hovered_piece_pos) {
                                 piece_under_mouse.piece_type = PieceType::Dead;
 
@@ -138,10 +134,10 @@ fn draw_board(piece_size: f32, pieces: &[Piece], selected_piece: Option<(u8, u8)
         let adj_x = piece.position.0 as f32 * piece_size;
         let adj_y = piece.position.1 as f32 * piece_size;            
         
-        // The text color should be the opposite of the board color
-        draw_text(piece_text, adj_x + piece_size / 2.0 - 25.0, adj_y + piece_size / 2.0, 50.0, match piece.black {
-            true => BLACK,
-            false => WHITE,
+        // The text PieceColor should be the opposite of the board PieceColor
+        draw_text(piece_text, adj_x + piece_size / 2.0 - 25.0, adj_y + piece_size / 2.0, 50.0, match piece.color {
+            PieceColor::Black => BLACK,
+            PieceColor::White => WHITE,
         });
 
     });
@@ -160,4 +156,12 @@ fn draw_board(piece_size: f32, pieces: &[Piece], selected_piece: Option<(u8, u8)
 
     }
 
+}
+
+fn window_conf() -> macroquad::window::Conf {
+    macroquad::window::Conf {
+        window_title: "Chess".to_owned(),
+        high_dpi: true,
+        ..Default::default()
+    }
 }
