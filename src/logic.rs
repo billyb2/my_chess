@@ -74,7 +74,7 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
             other_piece.piece_type != PieceType::Dead
         })
     };
-
+    *debug_text_to_draw = format!("{} {}", hovered_piece_pos.0.distance(piece.position.0), (hovered_piece_pos.1.distance(piece.position.1)));
 
     // First, check if the move is a move that this piece can usually make
     let piece_move = match piece.piece_type {
@@ -196,8 +196,7 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
                         // A diagonal range
                         // For some reason backwards ranges don't work??? I need to just reverse the normal iterator for some reason
                         let range_to_block_diaganol = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter().rev())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
-                        *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_diaganol);
-                        
+
                         no_piece_between_diag(range_to_block_diaganol)
                     
                     },
@@ -254,8 +253,7 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
                                     // A diagonal range
                                     // For some reason backwards ranges don't work??? I need to just reverse the normal iterator for some reason
                                     let range_to_block_diaganol = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter().rev())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
-                                    *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_diaganol);
-                                    
+
                                     no_piece_between_diag(range_to_block_diaganol)
                                 
                                 },
@@ -265,8 +263,7 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
                                     // A diagonal range
                                     // For some reason backwards ranges don't work??? I need to just reverse the normal iterator for some reason
                                     let range_to_block_diaganol = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((piece.position.1 + 1..hovered_piece_pos.1).into_iter())).map(|(x, y)| (x, y )).collect::<Vec<(u8, u8)>>();
-                                    *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_diaganol);
-                                    
+
                                     no_piece_between_diag(range_to_block_diaganol)
                                 
                                 },
@@ -318,8 +315,10 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
         },
         //TODO: Add king
         PieceType::King => Move {
-            can_move: false,
-            can_kill: false,
+            can_move: {
+                ((hovered_piece_pos.0.distance(piece.position.0)) <= 1 ) && ((hovered_piece_pos.1.distance(piece.position.1)) <= 1)
+            },
+            can_kill: true,
         },
         PieceType::Knight => Move {
             can_move: {
