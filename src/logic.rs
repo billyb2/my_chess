@@ -25,6 +25,43 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
     let piece = pieces.iter().find(|piece| piece.position == selected_piece.unwrap() && piece.piece_type != PieceType::Dead).unwrap();
     let piece_under_mouse = pieces.iter().find(|piece| piece.position == hovered_piece_pos && hovered_piece.1.unwrap() != PieceType::Dead);
 
+    let up = hovered_piece_pos.1 < piece.position.1;
+
+    let no_piece_between_diag = |range_to_block_diaganol: Vec<(u8, u8)>| -> bool {
+        pieces.iter().find(|other_piece|  {                            
+            range_to_block_diaganol.iter().find(|i| *i == &other_piece.position).is_some() && 
+            other_piece.position.0 != hovered_piece_pos.0 &&
+            other_piece.piece_type != PieceType::Dead
+        }).is_none()
+    };
+
+    let no_piece_between_vert = |range_to_block_horiz: Range<u8>| {
+        pieces.iter().find(|other_piece|  {
+            // Obviously, for a piece to block the rook, it needs to be on the same X axis (when moving vertically)
+            other_piece.position.0 == piece.position.0 && 
+            // Then, there can be no pieces in between where the player is trying to move and where it's moving
+            range_to_block_horiz.contains(&other_piece.position.1) && 
+            // If the other piece is at the very exact position the rook was trying to move, it will kill it
+            other_piece.position.1 != hovered_piece_pos.1 &&
+            // Obviously, the piece can't be dead
+            other_piece.piece_type != PieceType::Dead
+        }).is_none()
+    };
+
+    let no_piece_between_horiz = |range_to_block_horiz: Range<u8>| {
+        pieces.iter().find(|other_piece|  {
+            // Obviously, for a piece to block the rook, it needs to be on the same Y axis (when moving vertically)
+            other_piece.position.1 == piece.position.1 && 
+            // Then, there can be no pieces in between where the player is trying to move and where it's moving
+            range_to_block_horiz.contains(&other_piece.position.0) && 
+            // If the other piece is at the very exact position the rook was trying to move, it will kill it
+            other_piece.position.0 != hovered_piece_pos.0 &&
+            // Obviously, the piece can't be dead
+            other_piece.piece_type != PieceType::Dead
+        }).is_none()
+    };
+
+
     // First, check if the move is a move that this piece can usually make
     let (legal_move, can_kill) = match piece.piece_type {
         PieceType::Pawn => {
@@ -63,47 +100,20 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
 
         },
         PieceType::Rook => {
-            let no_piece_between_vert = |range_to_block_rook: Range<u8>| {
-                pieces.iter().find(|other_piece|  {
-                    // Obviously, for a piece to block the rook, it needs to be on the same X axis (when moving vertically)
-                    other_piece.position.0 == piece.position.0 && 
-                    // Then, there can be no pieces in between where the player is trying to move and where it's moving
-                    range_to_block_rook.contains(&other_piece.position.1) && 
-                    // If the other piece is at the very exact position the rook was trying to move, it will kill it
-                    other_piece.position.1 != hovered_piece_pos.1 &&
-                    // Obviously, the piece can't be dead
-                    other_piece.piece_type != PieceType::Dead
-                }).is_none()
-            };
-
-            let no_piece_between_horiz = |range_to_block_rook: Range<u8>| {
-                pieces.iter().find(|other_piece|  {
-                    // Obviously, for a piece to block the rook, it needs to be on the same Y axis (when moving vertically)
-                    other_piece.position.1 == piece.position.1 && 
-                    // Then, there can be no pieces in between where the player is trying to move and where it's moving
-                    range_to_block_rook.contains(&other_piece.position.0) && 
-                    // If the other piece is at the very exact position the rook was trying to move, it will kill it
-                    other_piece.position.0 != hovered_piece_pos.0 &&
-                    // Obviously, the piece can't be dead
-                    other_piece.piece_type != PieceType::Dead
-                }).is_none()
-            };
-
-
             ((piece.position.0 == hovered_piece_pos.0 &&
                 // Check to see if the rook is moving up or down
                  match hovered_piece_pos.1 < piece.position.1 {
                      // Moving up
                     true => {
-                        let range_to_block_rook = hovered_piece_pos.1..piece.position.1;
+                        let range_to_block_horiz = hovered_piece_pos.1..piece.position.1;
                         // There can't be any pieces between the place where the rook is, and where it's attempting to move
-                        no_piece_between_vert(range_to_block_rook)
+                        no_piece_between_vert(range_to_block_horiz)
 
                     },
                     // Moving down
                     false => {
-                        let range_to_block_rook = piece.position.1 + 1..hovered_piece_pos.1;
-                        no_piece_between_vert(range_to_block_rook)
+                        let range_to_block_horiz = piece.position.1 + 1..hovered_piece_pos.1;
+                        no_piece_between_vert(range_to_block_horiz)
                         
                     },
 
@@ -113,47 +123,39 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
              (piece.position.1 == hovered_piece_pos.1 && match hovered_piece_pos.0 < piece.position.0 {
                 // Left
                 true => {
-                    let range_to_block_rook = hovered_piece_pos.0..piece.position.0;
+                    let range_to_block_horiz = hovered_piece_pos.0..piece.position.0;
                     // There can't be any pieces between the place where the rook is, and where it's attempting to move
-                    no_piece_between_horiz(range_to_block_rook)
+                    no_piece_between_horiz(range_to_block_horiz)
 
                 },
                 // Right
                 false => {
-                    let range_to_block_rook = piece.position.0 + 1..hovered_piece_pos.0;
-                    no_piece_between_horiz(range_to_block_rook)
+                    let range_to_block_horiz = piece.position.0 + 1..hovered_piece_pos.0;
+                    no_piece_between_horiz(range_to_block_horiz)
                     
                 },
 
              }), true)
         },
-        PieceType::Bishop => {
-            let up = hovered_piece_pos.1 < piece.position.1;
-
-            let none_in_bishop_movement = |range_to_block_bishop: Vec<(u8, u8)>| -> bool {
-                pieces.iter().find(|other_piece|  {                            
-                    range_to_block_bishop.iter().find(|i| *i == &other_piece.position).is_some() && 
-                    other_piece.position.0 != hovered_piece_pos.0 &&
-                    other_piece.piece_type != PieceType::Dead
-                }).is_none()
-            };
-
-            (match hovered_piece_pos.0 < piece.position.0 {
+        PieceType::Bishop => { 
+            (
+                hovered_piece_pos.0.distance(piece.position.0) == hovered_piece_pos.1.distance(piece.position.1) &&
+                match hovered_piece_pos.0 < piece.position.0 {
                 // Left
                 true => match up {
                     // Left-Up
                     true => {
                         // A diagonal range
-                        let range_to_block_bishop = ((hovered_piece_pos.0..piece.position.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
-                        none_in_bishop_movement(range_to_block_bishop)
+                        let range_to_block_diaganol = ((hovered_piece_pos.0..piece.position.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
+                        no_piece_between_diag(range_to_block_diaganol)
 
                         
                     },
                     // Left-Down
                     false => {
                         // A diagonal range
-                        let range_to_block_bishop = ((hovered_piece_pos.0..piece.position.0).into_iter().zip((piece.position.1..hovered_piece_pos.1).into_iter())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
-                        none_in_bishop_movement(range_to_block_bishop)
+                        let range_to_block_diaganol = ((hovered_piece_pos.0..piece.position.0).into_iter().zip((piece.position.1..hovered_piece_pos.1).into_iter())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
+                        no_piece_between_diag(range_to_block_diaganol)
                     
                     },
                 },
@@ -164,10 +166,10 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
                     true => {
                         // A diagonal range
                         // For some reason backwards ranges don't work??? I need to just reverse the normal iterator for some reason
-                        let range_to_block_bishop = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter().rev())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
-                        *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_bishop);
+                        let range_to_block_diaganol = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter().rev())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
+                        *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_diaganol);
                         
-                        none_in_bishop_movement(range_to_block_bishop)
+                        no_piece_between_diag(range_to_block_diaganol)
                     
                     },
                     
@@ -175,16 +177,108 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
                     false => {
                         // A diagonal range
                         // For some reason backwards ranges don't work??? I need to just reverse the normal iterator for some reason
-                        let range_to_block_bishop = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((piece.position.1 + 1..hovered_piece_pos.1).into_iter())).map(|(x, y)| (x, y )).collect::<Vec<(u8, u8)>>();
-                        *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_bishop);
+                        let range_to_block_diaganol = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((piece.position.1 + 1..hovered_piece_pos.1).into_iter())).map(|(x, y)| (x, y )).collect::<Vec<(u8, u8)>>();
+                        *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_diaganol);
                         
-                        none_in_bishop_movement(range_to_block_bishop)
+                        no_piece_between_diag(range_to_block_diaganol)
                     
                     },
                 },
 
             }, true)
         
+        },
+        PieceType::Queen => {
+            (
+            match piece.position.0.distance(hovered_piece_pos.0) == piece.position.1.distance(hovered_piece_pos.1) {
+                // If that's true, then the player is moving diagnally, and should use bishop rules
+                true => (
+                    hovered_piece_pos.0.distance(piece.position.0) == hovered_piece_pos.1.distance(piece.position.1) &&
+                    match hovered_piece_pos.0 < piece.position.0 {
+                    // Left
+                    true => match up {
+                        // Left-Up
+                        true => {
+                            // A diagonal range
+                            let range_to_block_diaganol = ((hovered_piece_pos.0..piece.position.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
+                            no_piece_between_diag(range_to_block_diaganol)
+    
+                            
+                        },
+                        // Left-Down
+                        false => {
+                            // A diagonal range
+                            let range_to_block_diaganol = ((hovered_piece_pos.0..piece.position.0).into_iter().zip((piece.position.1..hovered_piece_pos.1).into_iter())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
+                            no_piece_between_diag(range_to_block_diaganol)
+                        
+                        },
+                    },
+    
+                    // Right
+                    false => match up {
+                        // Right-Up
+                        true => {
+                            // A diagonal range
+                            // For some reason backwards ranges don't work??? I need to just reverse the normal iterator for some reason
+                            let range_to_block_diaganol = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((hovered_piece_pos.1..piece.position.1).into_iter().rev())).map(|(x, y)| (x, y)).collect::<Vec<(u8, u8)>>();
+                            *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_diaganol);
+                            
+                            no_piece_between_diag(range_to_block_diaganol)
+                        
+                        },
+                        
+                        // Right-Down
+                        false => {
+                            // A diagonal range
+                            // For some reason backwards ranges don't work??? I need to just reverse the normal iterator for some reason
+                            let range_to_block_diaganol = ((piece.position.0 + 1..hovered_piece_pos.0).into_iter().zip((piece.position.1 + 1..hovered_piece_pos.1).into_iter())).map(|(x, y)| (x, y )).collect::<Vec<(u8, u8)>>();
+                            *debug_text_to_draw = format!("{}, {:?}", piece.position.1, range_to_block_diaganol);
+                            
+                            no_piece_between_diag(range_to_block_diaganol)
+                        
+                        },
+                    },
+    
+                }),
+                // If this is false, then we need to check if it's moving like a rook
+                false => (piece.position.0 == hovered_piece_pos.0 &&
+                    // Check to see if the rook is moving up or down
+                     match hovered_piece_pos.1 < piece.position.1 {
+                         // Moving up
+                        true => {
+                            let range_to_block_horiz = hovered_piece_pos.1..piece.position.1;
+                            // There can't be any pieces between the place where the rook is, and where it's attempting to move
+                            no_piece_between_vert(range_to_block_horiz)
+    
+                        },
+                        // Moving down
+                        false => {
+                            let range_to_block_horiz = piece.position.1 + 1..hovered_piece_pos.1;
+                            no_piece_between_vert(range_to_block_horiz)
+                            
+                        },
+    
+                }) 
+                // Rooks can move vertically or horizontally, but not both, hence the XOR
+                ^
+                 (piece.position.1 == hovered_piece_pos.1 && match hovered_piece_pos.0 < piece.position.0 {
+                    // Left
+                    true => {
+                        let range_to_block_horiz = hovered_piece_pos.0..piece.position.0;
+                        // There can't be any pieces between the place where the rook is, and where it's attempting to move
+                        no_piece_between_horiz(range_to_block_horiz)
+    
+                    },
+                    // Right
+                    false => {
+                        let range_to_block_horiz = piece.position.0 + 1..hovered_piece_pos.0;
+                        no_piece_between_horiz(range_to_block_horiz)
+                        
+                    },
+    
+                 }),
+            }, true)
+
         },
         _ => (false, false),
 
@@ -203,4 +297,32 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
 
     }
 
+}
+
+
+pub trait MyNumTrait {
+    fn is_even(&self) -> bool;
+    fn is_odd(&self) -> bool;
+    fn distance(self, y: u8) -> u8;
+
+}
+
+impl MyNumTrait for u8 {
+    #[inline(always)]
+    fn is_even(&self) -> bool {
+        *self & 1 == 0
+    }
+
+    #[inline(always)]
+    fn is_odd(&self) -> bool {
+        !self.is_even()
+    }
+
+    #[inline(always)]
+    fn distance(self, y: u8) -> u8 {
+        match self < y {
+            true => y - self,
+            false => self - y,
+        }
+    }
 }

@@ -14,24 +14,6 @@ fn mouse_in_rectangle(coords: (f32, f32), size: (f32, f32)) -> bool {
 
 }
 
-trait Evenness {
-    fn is_even(&self) -> bool;
-    fn is_odd(&self) -> bool;
-
-}
-
-impl Evenness for u8 {
-    #[inline(always)]
-    fn is_even(&self) -> bool {
-        *self & 1 == 0
-    }
-
-    #[inline(always)]
-    fn is_odd(&self) -> bool {
-        !self.is_even()
-    }
-}
-
 // Some code I generated that contains the starting positions of all the pieces
 const STARTING_PIECES: [Piece; 32] = [Piece { piece_type: PieceType::Pawn, position: (0, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (1, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (2, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (3, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (4, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (5, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (6, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (7, 1), black: true }, Piece { piece_type: PieceType::Pawn, position: (0, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (1, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (2, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (3, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (4, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (5, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (6, 6), black: false }, Piece { piece_type: PieceType::Pawn, position: (7, 6), black: false }, Piece { piece_type: PieceType::Rook, position: (0, 7), black: false }, Piece { piece_type: PieceType::Knight, position: (1, 7), black: false }, Piece { piece_type: PieceType::Bishop, position: (2, 7), black: false }, Piece { piece_type: PieceType::Queen, position: (4, 7), black: false }, Piece { piece_type: PieceType::King, position: (3, 7), black: false }, Piece { piece_type: PieceType::Bishop, position: (5, 7), black: false }, Piece { piece_type: PieceType::Knight, position: (6, 7), black: false }, Piece { piece_type: PieceType::Rook, position: (7, 7), black: false }, Piece { piece_type: PieceType::Rook, position: (0, 0), black: true }, Piece { piece_type: PieceType::Knight, position: (1, 0), black: true }, Piece { piece_type: PieceType::Bishop, position: (2, 0), black: true }, Piece { piece_type: PieceType::King, position: (3, 0), black: true }, Piece { piece_type: PieceType::Queen, position: (4, 0), black: true }, Piece { piece_type: PieceType::Bishop, position: (5, 0), black: true }, Piece { piece_type: PieceType::Knight, position: (6, 0), black: true }, Piece { piece_type: PieceType::Rook, position: (7, 0), black: true }];
 
