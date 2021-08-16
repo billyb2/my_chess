@@ -3,28 +3,18 @@ mod logic;
 use macroquad::prelude::*;
 use logic::*;
 
-#[inline]
-fn mouse_in_rectangle(coords: (f32, f32), size: (f32, f32)) -> bool {
-    let mouse_pos = mouse_position();
-    
-    mouse_pos.0 > coords.0 && 
-    mouse_pos.1 > coords.1 &&
-    mouse_pos.0 < coords.0 + size.0 &&
-    mouse_pos.1 < coords.1 + size.1 
-
-}
-
 // Some code I generated that contains the starting positions of all the pieces
-const STARTING_PIECES: [Piece; 32] = [Piece { piece_type: PieceType::Pawn, position: (0, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (1, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (2, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (3, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (4, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (5, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (6, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (7, 1), color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (0, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (1, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (2, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (3, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (4, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (5, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (6, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (7, 6), color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (1, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (2, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Queen, position: (4, 7), color: PieceColor::White }, Piece { piece_type: PieceType::King, position: (3, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (5, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (6, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (7, 7), color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (1, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (2, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::King, position: (3, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Queen, position: (4, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (5, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (6, 0), color: PieceColor::Black }, Piece { piece_type: PieceType::Rook, position: (7, 0), color: PieceColor::Black }];
+const STARTING_PIECES: [Piece; 32] = [Piece { piece_type: PieceType::Pawn, position: (0, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (1, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (2, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (3, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (4, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (5, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (6, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (7, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (0, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (1, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (2, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (3, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (4, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (5, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (6, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (7, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (1, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (2, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Queen, position: (4, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::King, position: (3, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (5, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (6, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (7, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (1, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (2, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::King, position: (3, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Queen, position: (4, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (5, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (6, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Rook, position: (7, 0), num_of_moves: 0, color: PieceColor::Black }];
 
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut pieces = STARTING_PIECES;
     let piece_size = screen_height() / 10.0;
     let mut selected_piece: Option<(u8, u8)> = None;
-
     
     let mut debug_text_to_draw = String::new();
+
+    let mut white_turn = true;
 
     loop {
         clear_background(DARKGRAY);
@@ -51,18 +41,26 @@ async fn main() {
                     let piece_move = check_movement(&pieces, &hovered_piece, hovered_piece_pos, &mut selected_piece, &mut debug_text_to_draw);
 
                     if piece_move.can_move {
-                        if piece_move.can_kill {
-                            if let Some(piece_under_mouse) = pieces.iter_mut().find(|piece| piece.position == hovered_piece_pos) {
-                                piece_under_mouse.piece_type = PieceType::Dead;
+                        let piece_is_white = pieces.iter().find(|piece| piece.position == selected_piece.unwrap() && piece.piece_type != PieceType::Dead).unwrap().color == PieceColor::White;
+
+                        if (piece_is_white && white_turn) || (!piece_is_white && !white_turn) {
+                            if piece_move.can_kill {
+                                if let Some(piece_under_mouse) = pieces.iter_mut().find(|piece| piece.position == hovered_piece_pos) {
+                                    piece_under_mouse.piece_type = PieceType::Dead;
+
+                                }
 
                             }
 
+
+                            let piece = pieces.iter_mut().find(|piece| piece.position == selected_piece.unwrap() && piece.piece_type != PieceType::Dead).unwrap();
+
+                            piece.position = hovered_piece_pos;
+                            piece.num_of_moves += 1;
+                            
+                            white_turn = !white_turn;
+
                         }
-
-
-                        let piece = pieces.iter_mut().find(|piece| piece.position == selected_piece.unwrap() && piece.piece_type != PieceType::Dead).unwrap();
-
-                        piece.position = hovered_piece_pos;
 
                     }
 
@@ -164,4 +162,16 @@ fn window_conf() -> macroquad::window::Conf {
         high_dpi: true,
         ..Default::default()
     }
+}
+
+
+#[inline]
+fn mouse_in_rectangle(coords: (f32, f32), size: (f32, f32)) -> bool {
+    let mouse_pos = mouse_position();
+    
+    mouse_pos.0 > coords.0 && 
+    mouse_pos.1 > coords.1 &&
+    mouse_pos.0 < coords.0 + size.0 &&
+    mouse_pos.1 < coords.1 + size.1 
+
 }

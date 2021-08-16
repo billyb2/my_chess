@@ -23,7 +23,9 @@ pub struct Piece {
     pub piece_type: PieceType,
     pub position: (u8, u8),
     pub color: PieceColor,
-
+    // The number of moves that a piece has made (literally only for pawns)
+    // Stored as a u32 since I don't want the game to crash if it goes on for a really long time
+    pub num_of_moves: u32,
 
 }
 
@@ -83,9 +85,17 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
             // Make sure the pawn is only moving 1 space vertically, no matter what kind of move they're making
             let legal_move = match piece.color {
                 // Black pawns can only move up
-                PieceColor::Black => hovered_piece_pos.1 > piece.position.1 && hovered_piece_pos.1 - piece.position.1 == 1,
+                PieceColor::Black => hovered_piece_pos.1 > piece.position.1 && match piece.num_of_moves {
+                    // On their first move, pawns can move 1 or 2 spaces, but they can only move 2 if they're moving straight forward
+                    0 =>  (hovered_piece_pos.1 - piece.position.1 == 2 && piece.position.0 == hovered_piece_pos.0) ||  hovered_piece_pos.1 - piece.position.1 == 1,
+                    _ => hovered_piece_pos.1 - piece.position.1 == 1, 
+                },
                 // White pawns can only move down
-                PieceColor::White => hovered_piece_pos.1 < piece.position.1 && piece.position.1 - hovered_piece_pos.1 == 1,
+                PieceColor::White => hovered_piece_pos.1 < piece.position.1 && match piece.num_of_moves {
+                    // On their first move, pawns can move 1 or 2 spaces, but they can only move 2 if they're moving straight forward
+                    0 =>  (piece.position.1 - hovered_piece_pos.1 == 2 && piece.position.0 == hovered_piece_pos.0) ||  piece.position.1 - hovered_piece_pos.1 == 1,
+                    _ => piece.position.1 - hovered_piece_pos.1 == 1, 
+                },
             }
             &&
 
@@ -346,8 +356,8 @@ pub fn check_movement(pieces: &[Piece], hovered_piece: &(Option<(u8, u8)>, Optio
     };
 
 
+    // Obviously, if it isn't a legal move, then don't let the player move at all
     match piece_move.can_move {
-        // Obviously, if it isn't a legal move, then don't let the player move at all
         true => match piece_under_mouse {
             // If it is a legal move, only move onto a piece if it's an enemy piece (piece.color != piece_under_mouse.color)
             // Also only move onto that piece if it's able to kill it
@@ -380,6 +390,7 @@ pub trait MyNumTrait {
 impl MyNumTrait for u8 {
     #[inline(always)]
     fn is_even(&self) -> bool {
+        // Checks the least significant bit for a 0, since if it's a zero, the integer is guaranteed to be even
         *self & 1 == 0
     }
 
