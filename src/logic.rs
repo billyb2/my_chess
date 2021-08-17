@@ -1,4 +1,5 @@
 use std::ops::Range;
+use std::convert::TryInto;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum PieceType {
@@ -12,13 +13,71 @@ pub enum PieceType {
     Dead,
 }
 
+impl PieceType {
+    pub fn to_str(&self) -> &str {
+        match self {
+            Self::Pawn => "P",
+            Self::Rook => "R",
+            Self::Knight => "Kn",
+            Self::Bishop => "B",
+            Self::King => "Ki",
+            Self::Queen => "Q",
+            Self::Dead => "",
+        }
+    }
+
+    pub fn to_bin(&self) -> u8 {
+        match self {
+            Self::Pawn => 1,
+            Self::Rook => 2,
+            Self::Knight => 3,
+            Self::Bishop => 4,
+            Self::King => 5,
+            Self::Queen => 6,
+            Self::Dead => 0,
+        }
+    }
+
+    pub fn from_bin(bin: u8) -> Self {
+        match bin {
+            1 => Self::Pawn,
+            2 => Self::Rook,
+            3 => Self::Knight,
+            4 => Self::Bishop,
+            5 => Self::King,
+            6 => Self::Queen,
+            0 => Self::Dead,
+            _ => unimplemented!(),
+        }
+
+    }
+
+}
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum PieceColor {
     Black,
     White,
 }
 
-#[derive(Copy, Clone, Debug)]
+impl PieceColor {
+    pub fn to_bin(&self) -> u8 {
+        match self {
+            Self::Black => 0,
+            Self::White => 1,
+        }
+    }
+
+    pub fn from_bin(bin: u8) -> Self {
+        match bin {
+            0 => Self::Black,
+            1 => Self::White,
+            _ => unimplemented!(),
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Piece {
     pub piece_type: PieceType,
     pub position: (u8, u8),
@@ -28,6 +87,24 @@ pub struct Piece {
     pub num_of_moves: u32,
 
 }
+
+impl Piece {
+    pub fn to_bin(&self) -> [u8; 8] {
+        let num_mov_bin = self.num_of_moves.to_be_bytes();
+        [self.piece_type.to_bin(), self.position.0, self.position.1, self.color.to_bin(), num_mov_bin[0], num_mov_bin[1], num_mov_bin[2], num_mov_bin[3]]
+    }
+
+    pub fn from_bin(bin: &[u8]) -> Self {
+        Self {
+            piece_type: PieceType::from_bin(bin[0]),
+            position: (bin[1], bin[2]),
+            color: PieceColor::from_bin(bin[3]),
+            num_of_moves: u32::from_be_bytes(bin[4..].try_into().unwrap()),
+
+        }
+    }
+}
+
 
 pub struct Move {
     pub can_move: bool,
@@ -405,4 +482,24 @@ impl MyNumTrait for u8 {
             false => self - y,
         }
     }
+}
+
+
+pub trait ChessBoard {
+    fn to_bin(&self) -> [u8; 256];
+}
+
+impl ChessBoard for [Piece; 32] {
+    fn to_bin(&self) -> [u8; 256] {
+        let piece_bytes: Vec<u8> = self.iter().flat_map(|piece| piece.to_bin()).collect();
+        let map_bin: [u8; 256] = piece_bytes[..].try_into().unwrap();
+        
+        map_bin
+    }
+}
+
+pub fn chess_board_from_bin(bin: [u8; 256]) -> [Piece; 32] {
+    let bin_chunks = bin.chunks(8);
+    bin_chunks.map(|chunk| Piece::from_bin(chunk)).collect::<Vec<Piece>>().as_slice().try_into().unwrap()
+
 }

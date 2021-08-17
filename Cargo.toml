@@ -9,6 +9,8 @@ opt-level = 0
 
 [dependencies]
 macroquad = "0.3"
+sapp-jsutils = "0.1"
+base64 = "0.13"
 
 [package.metadata.android.activity_attributes]
 "android:screenOrientation" = "userLandscape"
