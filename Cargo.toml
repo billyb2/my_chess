@@ -7,10 +7,18 @@ edition = "2018"
 # Since neither me or Luke uses a debugger, turning off debug info should speed up compile times (although it does make debugging shaders a bit more difficult)
 opt-level = 0
 
+[profile.release]
+opt-level = 3
+overflow-checks = false
+lto = true
+panic = "abort"
+codegen-units = 1
+
 [dependencies]
 macroquad = "0.3"
 sapp-jsutils = "0.1"
 base64 = "0.13"
+lz4_flex = { version = "0.8", default-features = false, features = ["checked-decode"]}
 
 [package.metadata.android.activity_attributes]
 "android:screenOrientation" = "userLandscape"

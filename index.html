@@ -36,12 +36,10 @@
         
         function send_board(board_string) {
             // call rust function returning a string
-        
-            //alert(consume_js_object(rust_object)); // ensure that this is a string
             let formatted_board_string = consume_js_object(board_string);
         
-            alert(formatted_board_string);
-            window.open('mailto:opponent_email?subject=chess123&body='+formatted_board_string);
+            //alert(formatted_board_string);
+            window.open('mailto:opponent_email?subject=c123&body='+formatted_board_string);
         
         };
     

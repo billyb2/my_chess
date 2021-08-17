@@ -2,15 +2,33 @@
 args = ["build", "--target", "wasm32-unknown-unknown"]
 command = "cargo"
 
+[tasks.build_wasm_release]
+args = ["build", "--target", "wasm32-unknown-unknown", "--release"]
+command = "cargo"
+
 [tasks.copy_wasm]
 args = ["target/wasm32-unknown-unknown/debug/my_chess.wasm", "target/"]
 command = "cp"
 
-[tasks.workflow]
+[tasks.copy_wasm_release]
+args = ["target/wasm32-unknown-unknown/release/my_chess.wasm", "target/"]
+command = "cp"
+
+
+[tasks.work]
 dependencies = ["build_wasm", "copy_wasm"]
+
+[tasks.work_release]
+dependencies = ["build_wasm_release", "copy_wasm_release"]
 
 [tasks.serve]
 install_crate = "basic-http-server"
 args = ["."]
 command = "basic-http-server"
 dependencies = ["build_wasm", "copy_wasm"]
+
+[tasks.serve_release]
+install_crate = "basic-http-server"
+args = ["."]
+command = "basic-http-server"
+dependencies = ["build_wasm_release", "copy_wasm_release"]

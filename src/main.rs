@@ -7,6 +7,7 @@ use logic::*;
 use sapp_jsutils::JsObject;
 
 use base64::{encode_config, decode_config};
+use lz4_flex::{compress_prepend_size, decompress_size_prepended};
 
 // Some code I generated that contains the starting positions of all the pieces
 const STARTING_PIECES: [Piece; 32] = [Piece { piece_type: PieceType::Pawn, position: (0, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (1, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (2, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (3, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (4, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (5, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (6, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (7, 1), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Pawn, position: (0, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (1, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (2, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (3, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (4, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (5, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (6, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Pawn, position: (7, 6), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (1, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (2, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Queen, position: (4, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::King, position: (3, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Bishop, position: (5, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Knight, position: (6, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (7, 7), num_of_moves: 0, color: PieceColor::White }, Piece { piece_type: PieceType::Rook, position: (0, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (1, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (2, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::King, position: (3, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Queen, position: (4, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Bishop, position: (5, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Knight, position: (6, 0), num_of_moves: 0, color: PieceColor::Black }, Piece { piece_type: PieceType::Rook, position: (7, 0), num_of_moves: 0, color: PieceColor::Black }];
@@ -66,19 +67,22 @@ async fn main() {
                             white_turn = !white_turn;
 
                             let board_bin = pieces.to_bin();
-                            let board_bin_as_ascii85 = JsObject::string(&encode_config(&board_bin, base64::URL_SAFE_NO_PAD));
+                            let compressed_board_bin = compress_prepend_size(&board_bin);
+
+                            let board_bin_as_ascii85 = JsObject::string(&encode_config(&compressed_board_bin, base64::URL_SAFE_NO_PAD));
 
                             // Tests the to_bin and from_bin functions
                             #[cfg(debug_assertions)]
                             {
-                                let mut board_string = String::new();
+                                let mut board_string = String::with_capacity(200);
 
                                 JsObject::to_string(&board_bin_as_ascii85, &mut board_string);
 
-                                let board_bin = decode_config(&board_string, base64::URL_SAFE_NO_PAD).unwrap();
+                                let compressed_board_bin = decode_config(&board_string, base64::URL_SAFE_NO_PAD).unwrap();
+                                let board_bin = decompress_size_prepended(&compressed_board_bin).unwrap();
 
                                 let board = chess_board_from_bin(board_bin.try_into().unwrap());
-                                debug_assert_eq!(board, pieces);
+                                assert_eq!(board, pieces);
 
                             }
 
@@ -92,7 +96,7 @@ async fn main() {
                     selected_piece = None;
 
                 // There is no piece selected, so it selects the piece the player is currently hovering over
-                } else if let Some(piece) = pieces.iter_mut().find(|piece| piece.position == hovered_piece_pos && piece.piece_type != PieceType::Dead) {
+                } else if let Some(piece) = pieces.iter().find(|piece| piece.position == hovered_piece_pos && piece.piece_type != PieceType::Dead) {
                     selected_piece = match selected_piece.is_none() {
                         true => Some(piece.position),
                         false => None,
@@ -192,7 +196,7 @@ fn mouse_in_rectangle(coords: (f32, f32), size: (f32, f32)) -> bool {
 
 }
 
-//JS function
+//JS function to send the board
 extern "C" {
     fn send_board(board_string: JsObject);
 }
