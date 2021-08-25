@@ -1,10 +1,13 @@
 use std::ops::Range;
 use std::convert::TryInto;
+use std::io::Cursor;
 
 #[cfg(target_arch = "wasm32")]
 use sapp_jsutils::JsObject;
 use base64::{encode_config, decode_config};
 use lz4_flex::{compress_prepend_size, decompress_size_prepended};
+use brotli::{BrotliCompress, BrotliDecompress};
+use brotli::enc::BrotliEncoderParams;
 
 use macroquad::prelude::*;
 
@@ -493,10 +496,13 @@ impl GameStage for ChessGame {
 
                             #[cfg(target_arch = "wasm32")]
                             {
-                                let board_bin = self.pieces.to_bin();
-                                let compressed_board_bin = compress_prepend_size(&board_bin);
+                                let mut board_bin = Cursor::new(self.pieces.to_bin());
+                                let mut compressed_board_bin = Cursor::new(Vec::with_capacity(100));
+                                let params = BrotliEncoderParams::default();
+                                BrotliCompress(&mut board_bin, &mut compressed_board_bin, &params).unwrap();
+                                //let compressed_board_bin = compress_prepend_size(&board_bin);
 
-                                let board_bin_as_ascii85 = JsObject::string(&encode_config(&compressed_board_bin, base64::URL_SAFE_NO_PAD));
+                                let board_bin_as_ascii85 = JsObject::string(&encode_config(&compressed_board_bin.into_inner(), base64::URL_SAFE_NO_PAD));
 
                                 // Tests the to_bin and from_bin functions
                                 #[cfg(debug_assertions)]
@@ -505,10 +511,12 @@ impl GameStage for ChessGame {
 
                                     JsObject::to_string(&board_bin_as_ascii85, &mut board_string);
 
-                                    let compressed_board_bin = decode_config(&board_string, base64::URL_SAFE_NO_PAD).unwrap();
-                                    let board_bin = decompress_size_prepended(&compressed_board_bin).unwrap();
+                                    let mut compressed_board_bin = Cursor::new(decode_config(&board_string, base64::URL_SAFE_NO_PAD).unwrap());
+                                    let mut board_bin = Cursor::new(Vec::with_capacity(256));
+                                    BrotliDecompress(&mut compressed_board_bin, &mut board_bin).unwrap();
+                                    //let board_bin = decompress_size_prepended(&compressed_board_bin).unwrap();
 
-                                    let board = chess_board_from_bin(board_bin.try_into().unwrap());
+                                    let board = chess_board_from_bin(board_bin.into_inner().try_into().unwrap());
                                     assert_eq!(board, self.pieces);
 
                                 }
